@@ -64,7 +64,7 @@ Client stores token and accesses protected routes
 JWT works like a secure digital access token 🎟️
 🛠️ Installation & Setup
 1️⃣ Clone the Repository
-git clone https://github.com/your-username/auth-app-mern.git
+git clone https://github.com/your-username/auth-app-mern.git](https://github.com/Yaqoob-Samoon/auth-app-mern.git 
 cd auth-app-mern
 2️⃣ Backend Setup
 cd backend

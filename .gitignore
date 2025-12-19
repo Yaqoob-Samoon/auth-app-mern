@@ -1,0 +1,8 @@
+# Environment variables for Backend Application
+PORT = 3000
+MONGO_URL = mongodb+srv://samoonyaqoob95:H9vjrCiQq0OA4uBN@cluster0.xdbmc1j.mongodb.net/
+JWT_SECRET = mysecretkey
+
+# Ignore .env file of frontend application
+VITE_API_URL=http://localhost:3000/api
+

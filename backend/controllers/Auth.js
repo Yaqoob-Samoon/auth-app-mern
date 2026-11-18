@@ -1,119 +1,133 @@
-const bcrypt = require('bcryptjs');
-const User = require('../models/User');
+const bcrypt = require("bcryptjs");
+const User = require("../models/user"); // lowercase, matches models/user.js
 const jwt = require("jsonwebtoken");
-const {options} = require("../routes/route");
 require("dotenv").config();
 
-exports.signup = async (req , res) => {
+// ---------- SIGNUP ----------
+exports.signup = async (req, res) => {
   try {
-    // get data
-    const { name , email , password , role } = req.body;
-    
-    // check if user already exists
-    const existingUser = await User.findOne({ email });
-    if(existingUser){
+    const { name, email, password } = req.body;
+
+    // validation
+    if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: "User already exists"
+        message: "Please fill all fields",
       });
     }
-    
-    // secure password
-   let hashedPassword;
-try {
-  hashedPassword = await bcrypt.hash(password, 10);
-} catch (error) {
-  return res.status(500).json({ success:false, message:"Error in hashing password"});
-}
 
-    // create user
+    // check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "User already exists",
+      });
+    }
+
+    // secure password
+    let hashedPassword;
+    try {
+      hashedPassword = await bcrypt.hash(password, 10);
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: "Error in hashing password",
+      });
+    }
+
+    // create user (role is set on the server, never taken from the request)
     const user = await User.create({
-      name , 
-      email ,
+      name,
+      email,
       password: hashedPassword,
-      role
-    })
+      role: "student",
+    });
+
+    // never send the password hash back
+    user.password = undefined;
+
     return res.status(201).json({
       success: true,
       message: "User created successfully",
-      user
+      user,
     });
-
-    
   } catch (error) {
-    console.log(error);
+    console.log("SIGNUP ERROR:", error);
     return res.status(500).json({
       success: false,
-      message: "User can not be Created please try again later"
+      message: "User can not be created, please try again later",
     });
   }
-}
-//login
+};
 
+// ---------- LOGIN ----------
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validation
+    // validation
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Please fill all fields"
+        message: "Please fill all fields",
       });
     }
 
-    // Check if user exists
-    let user = await User.findOne({ email });
+    // check if user exists
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "User is not registered"
+        message: "User is not registered",
       });
     }
 
-    // Compare password
+    // compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(403).json({
         success: false,
-        message: "Password Incorrect",
+        message: "Password incorrect",
       });
     }
 
-    // Create JWT payload
+    // JWT payload
     const payload = {
       email: user.email,
       id: user._id,
       role: user.role,
     };
 
-    // Generate token
-    let token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "2h" });
+    // generate token (2 hours)
+    const token = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: "2h",
+    });
 
     user.password = undefined;
 
+    // cookie settings: cross-site cookies need secure + sameSite none in production
+    const isProd = process.env.NODE_ENV === "production";
     const options = {
-      expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      expires: new Date(Date.now() + 2 * 60 * 60 * 1000), // matches token life
       httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
     };
 
-  
     res.cookie("token", token, options);
 
     return res.status(200).json({
       success: true,
       token,
       user,
-      message: "User Logged In Successfully",
+      message: "User logged in successfully",
     });
-
   } catch (error) {
     console.log("LOGIN ERROR:", error);
     return res.status(500).json({
       success: false,
-      message: "Login Failed Please Try Again Later",
+      message: "Login failed, please try again later",
     });
   }
 };
-
-

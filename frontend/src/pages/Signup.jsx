@@ -67,7 +67,8 @@ const Signup = () => {
               value={formData.role}
             >
               <option value="student">Student</option>
-              <option value="admin">Admin</option>
+              {/* Changed from Admin to Teacher */}
+              <option value="teacher">Teacher</option>
             </select>
           </div>
           <button

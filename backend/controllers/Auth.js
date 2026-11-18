@@ -1,15 +1,15 @@
 const bcrypt = require("bcryptjs");
-const User = require("../models/user"); // lowercase, matches models/user.js
+const User = require("../models/user"); 
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 // ---------- SIGNUP ----------
 exports.signup = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
 
     // validation
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !role) {
       return res.status(400).json({
         success: false,
         message: "Please fill all fields",
@@ -36,12 +36,12 @@ exports.signup = async (req, res) => {
       });
     }
 
-    // create user (role is set on the server, never taken from the request)
+    // create user with dynamic role
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
-      role: "student",
+      role: role, 
     });
 
     // never send the password hash back
@@ -106,10 +106,10 @@ exports.login = async (req, res) => {
 
     user.password = undefined;
 
-    // cookie settings: cross-site cookies need secure + sameSite none in production
+    // cookie settings for cross-site authentication
     const isProd = process.env.NODE_ENV === "production";
     const options = {
-      expires: new Date(Date.now() + 2 * 60 * 60 * 1000), // matches token life
+      expires: new Date(Date.now() + 2 * 60 * 60 * 1000), 
       httpOnly: true,
       secure: isProd,
       sameSite: isProd ? "none" : "lax",

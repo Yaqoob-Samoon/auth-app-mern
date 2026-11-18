@@ -1,30 +1,32 @@
 const jwt = require("jsonwebtoken");
-  
 require("dotenv").config();
 
-
-
- exports.auth = (req, res, next) => {
+exports.auth = (req, res, next) => {
   try {
-    const token = req.cookies.token || req.body.token || req.header("Authorization").replace("Bearer", "");
-
+    // Fix: safely extract token from Authorization header if it exists
+    let token = req.cookies.token || req.body.token;
+    if (req.header("Authorization")) {
+      token = req.header("Authorization").replace("Bearer ", "");
+    }
 
     if (!token || token === undefined) {
       return res.status(401).json({ 
-        success:false,
-        message: "Can not finf token" });
+        success: false,
+        message: "Can not find token" 
+      });
     }
 
     // verify token
     try {
-      const payload = jwt.verify(token,process.env.JWT_SECRET);
+      const payload = jwt.verify(token, process.env.JWT_SECRET);
       console.log(payload);
 
       req.user = payload;
     } catch (error) {
         return res.status(401).json({ 
-        success:false,
-        message: "Token is invalid" });
+        success: false,
+        message: "Token is invalid" 
+      });
     }
 
     next();
@@ -32,7 +34,7 @@ require("dotenv").config();
   } catch (err) {
     console.error(err);
      return res.status(401).json({ 
-        success:false,
+        success: false,
         message: "Something went wrong verifying the token",
       err: err.message 
     });
@@ -40,36 +42,38 @@ require("dotenv").config();
 };
 
 // 👨‍🎓 Student role middleware
- exports.isStudent = (req, res, next) => {
+exports.isStudent = (req, res, next) => {
   try {
-  if (req.user.role !== "student") {
-      return res.status(401).json({ 
-        success:false,
-        message: "This is protected route for Students" });
-  }
-  next();
-}catch(err) {
+    if (req.user.role !== "student") {
+        return res.status(401).json({ 
+          success: false,
+          message: "This is protected route for Students" 
+        });
+    }
+    next();
+  } catch(err) {
     return res.status(501).json({ 
-        success:false,
-        message: "User Role is not matching" });
+        success: false,
+        message: "User Role is not matching" 
+    });
+  }
 }
- }
 
-
-// 👨‍💼 Admin role middleware'
-
-exports.isAdmin = (req , res , next) => {
+// 👨‍🏫 Teacher role middleware (Renamed from isAdmin)
+exports.isTeacher = (req, res, next) => {
   try {
-    if(req.user.role != "admin") {
+    if (req.user.role !== "teacher") {
       return res.status(401).json({ 
-        success:false,
-        message: "This is protected route for admin" });
+        success: false,
+        message: "This is protected route for teachers" 
+      });
     }
 
     next();
-  }catch(err) {
+  } catch(err) {
     return res.status(501).json({ 
-        success:false,
-        message: "User Role is not matching" });
+        success: false,
+        message: "User Role is not matching" 
+    });
   }
 }

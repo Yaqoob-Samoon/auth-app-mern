@@ -28,8 +28,9 @@ function App() {
             <Route path="/student" element={<Student />} />
           </Route>
 
-          <Route element={<RoleRoute requiredRole="admin" />}>
-            <Route path="/admin" element={<Admin />} />
+          {/* Changed requiredRole to "teacher" and path to "/teacher" */}
+          <Route element={<RoleRoute requiredRole="teacher" />}>
+            <Route path="/teacher" element={<Admin />} />
           </Route>
         </Route>
       </Routes>
